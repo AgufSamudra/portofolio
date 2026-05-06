@@ -67,9 +67,9 @@ src/
 
 Struktur ini mengikuti prinsip **Clean Architecture** - setiap lapisan punya tanggung jawab yang jelas dan tidak saling bergantung sembarangan.
 
-- **`cmd/migrate/main.go`** adalah *entrypoint* - tugasnya hanya menerima perintah dari CLI dan meneruskannya ke layer di bawah. Tidak ada logic bisnis di sini.
-- **`internal/databases/migrate.go`** adalah *infrastructure layer* - semua urusan teknis koneksi ke database dan eksekusi migration dikurung di sini. Kalau suatu saat kamu ganti library migration, cukup ubah file ini, bagian lain tidak terpengaruh.
-- **`internal/databases/migrations/*.sql`** adalah *data layer* - murni berisi definisi perubahan skema database, tanpa logic Go sama sekali.
+- `cmd/migrate/main.go` adalah *entrypoint* - tugasnya hanya menerima perintah dari CLI dan meneruskannya ke layer di bawah. Tidak ada logic bisnis di sini.
+- `internal/databases/migrate.go` adalah *infrastructure layer* - semua urusan teknis koneksi ke database dan eksekusi migration dikurung di sini. Kalau suatu saat kamu ganti library migration, cukup ubah file ini, bagian lain tidak terpengaruh.
+- `internal/databases/migrations/*.sql` adalah *data layer* - murni berisi definisi perubahan skema database, tanpa logic Go sama sekali.
 
 Dengan pemisahan ini, kode tetap mudah di-maintain dan di-test seiring project berkembang.
 

@@ -6,11 +6,14 @@ import {
   BookOpen,
   BriefcaseBusiness,
   CalendarDays,
+  Check,
   Clock3,
+  Copy,
   Download,
   GraduationCap,
   Menu,
   MapPin,
+  Search,
   Sparkles,
   X,
 } from "lucide-react"
@@ -302,69 +305,241 @@ function WhatsappIcon({ className }: { className?: string }) {
   )
 }
 
+type MarkdownBlock =
+  | { type: "heading"; level: 1 | 2 | 3; text: string }
+  | { type: "list"; items: string[] }
+  | { type: "code"; language: string; code: string }
+  | { type: "table"; headers: string[]; rows: string[][] }
+  | { type: "paragraph"; text: string }
+
 function MarkdownContent({ content }: { content: string }) {
-  const blocks = content.split(/\n{2,}/)
+  const blocks = parseMarkdownBlocks(content)
+  const [copiedCodeBlock, setCopiedCodeBlock] = useState<number | null>(null)
+
+  async function copyCodeBlock(code: string, index: number) {
+    await navigator.clipboard.writeText(code)
+    setCopiedCodeBlock(index)
+    window.setTimeout(() => setCopiedCodeBlock(null), 1600)
+  }
 
   return (
     <div className="space-y-6 text-zinc-300">
       {blocks.map((block, index) => {
-        const trimmed = block.trim()
-
-        if (trimmed.startsWith("### ")) {
+        if (block.type === "heading" && block.level === 3) {
           return (
             <h3 key={index} className="pt-4 text-2xl font-semibold text-white">
-              {renderInline(trimmed.replace("### ", ""))}
+              {renderInline(block.text)}
             </h3>
           )
         }
 
-        if (trimmed.startsWith("## ")) {
+        if (block.type === "heading" && block.level === 2) {
           return (
             <h2 key={index} className="pt-6 text-3xl font-semibold text-white">
-              {renderInline(trimmed.replace("## ", ""))}
+              {renderInline(block.text)}
             </h2>
           )
         }
 
-        if (trimmed.startsWith("# ")) {
+        if (block.type === "heading" && block.level === 1) {
           return (
             <h1 key={index} className="text-4xl font-semibold text-white">
-              {renderInline(trimmed.replace("# ", ""))}
+              {renderInline(block.text)}
             </h1>
           )
         }
 
-        if (trimmed.startsWith("- ")) {
+        if (block.type === "list") {
           return (
             <ul key={index} className="space-y-3 pl-5">
-              {trimmed.split(/\r?\n/).map((item) => (
+              {block.items.map((item) => (
                 <li key={item} className="list-disc leading-8 marker:text-cyan-300">
-                  {renderInline(item.replace(/^- /, ""))}
+                  {renderInline(item)}
                 </li>
               ))}
             </ul>
           )
         }
 
-        if (trimmed.startsWith("```")) {
+        if (block.type === "code") {
           return (
-            <pre
-              key={index}
-              className="overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-5 text-sm text-zinc-200"
-            >
-              <code>{trimmed.replace(/^```\w*\r?\n?|\r?\n?```$/g, "")}</code>
-            </pre>
+            <div key={index} className="relative rounded-xl border border-white/10 bg-black/40">
+              <button
+                type="button"
+                className="absolute right-3 top-3 inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/10 text-zinc-300 transition hover:bg-white/15 hover:text-white"
+                aria-label="Copy code"
+                title="Copy code"
+                onClick={() => void copyCodeBlock(block.code, index)}
+              >
+                {copiedCodeBlock === index ? (
+                  <Check className="size-4 text-emerald-300" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+              </button>
+              <pre className="overflow-x-auto p-5 pr-16 text-sm leading-7 text-zinc-200">
+                <code className={`language-${block.language || "text"}`}>{block.code}</code>
+              </pre>
+            </div>
+          )
+        }
+
+        if (block.type === "table") {
+          return (
+            <div key={index} className="overflow-x-auto rounded-xl border border-white/10">
+              <table className="min-w-full border-collapse text-left text-sm">
+                <thead className="bg-white/10 text-cyan-100">
+                  <tr>
+                    {block.headers.map((header) => (
+                      <th key={header} className="border-b border-white/10 px-4 py-3 font-semibold">
+                        {renderInline(header)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {block.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex} className="bg-black/20">
+                      {row.map((cell, cellIndex) => (
+                        <td key={cellIndex} className="px-4 py-3 leading-7 text-zinc-300">
+                          {renderInline(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )
         }
 
         return (
           <p key={index} className="text-lg leading-9">
-            {renderInline(trimmed.replace(/\r?\n/g, " "))}
+            {renderInline(block.text)}
           </p>
         )
       })}
     </div>
   )
+}
+
+function parseMarkdownBlocks(content: string): MarkdownBlock[] {
+  const lines = content.replace(/\r\n/g, "\n").split("\n")
+  const blocks: MarkdownBlock[] = []
+  let index = 0
+
+  while (index < lines.length) {
+    const line = lines[index]
+    const trimmed = line.trim()
+
+    if (!trimmed) {
+      index += 1
+      continue
+    }
+
+    const codeFenceMatch = trimmed.match(/^```(\w*)$/)
+    if (codeFenceMatch) {
+      const codeLines: string[] = []
+      index += 1
+
+      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+        codeLines.push(lines[index])
+        index += 1
+      }
+
+      if (index < lines.length) {
+        index += 1
+      }
+
+      blocks.push({
+        type: "code",
+        language: codeFenceMatch[1],
+        code: codeLines.join("\n"),
+      })
+      continue
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)$/)
+    if (headingMatch) {
+      blocks.push({
+        type: "heading",
+        level: headingMatch[1].length as 1 | 2 | 3,
+        text: headingMatch[2],
+      })
+      index += 1
+      continue
+    }
+
+    if (isMarkdownTableStart(lines, index)) {
+      const tableLines: string[] = []
+
+      while (index < lines.length && lines[index].includes("|") && lines[index].trim()) {
+        tableLines.push(lines[index])
+        index += 1
+      }
+
+      const [headerLine, , ...rowLines] = tableLines
+      blocks.push({
+        type: "table",
+        headers: splitTableRow(headerLine),
+        rows: rowLines.map(splitTableRow),
+      })
+      continue
+    }
+
+    if (trimmed.startsWith("- ")) {
+      const items: string[] = []
+
+      while (index < lines.length && lines[index].trim().startsWith("- ")) {
+        items.push(lines[index].trim().replace(/^- /, ""))
+        index += 1
+      }
+
+      blocks.push({ type: "list", items })
+      continue
+    }
+
+    const paragraphLines: string[] = []
+
+    while (
+      index < lines.length &&
+      lines[index].trim() &&
+      !lines[index].trim().startsWith("```") &&
+      !lines[index].trim().match(/^(#{1,3})\s+/) &&
+      !lines[index].trim().startsWith("- ") &&
+      !isMarkdownTableStart(lines, index)
+    ) {
+      paragraphLines.push(lines[index].trim())
+      index += 1
+    }
+
+    blocks.push({
+      type: "paragraph",
+      text: paragraphLines.join(" "),
+    })
+  }
+
+  return blocks
+}
+
+function isMarkdownTableStart(lines: string[], index: number) {
+  return Boolean(
+    lines[index]?.includes("|") &&
+      lines[index + 1]
+        ?.trim()
+        .split("|")
+        .filter(Boolean)
+        .every((cell) => /^:?-{3,}:?$/.test(cell.trim())),
+  )
+}
+
+function splitTableRow(row: string) {
+  return row
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim())
 }
 
 function renderInline(text: string) {
@@ -965,21 +1140,57 @@ function BlogCard({ post, light = false }: { post: BlogPost; light?: boolean }) 
 }
 
 function BlogPage({ posts }: { posts: BlogPost[] }) {
+  const [query, setQuery] = useState("")
+  const normalizedQuery = query.trim().toLowerCase()
+  const filteredPosts = useMemo(() => {
+    if (!normalizedQuery) {
+      return posts
+    }
+
+    return posts.filter((post) =>
+      [post.title, post.excerpt].some((value) =>
+        value.toLowerCase().includes(normalizedQuery),
+      ),
+    )
+  }, [normalizedQuery, posts])
+
   return (
     <section className="mx-auto w-full max-w-6xl px-5 py-16 md:py-24">
-      <div className="mb-12 max-w-3xl">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
-          Blog
-        </p>
-        <h1 className="text-5xl font-semibold tracking-tight text-white md:text-7xl">
-          Baca Blog Terbaru
-        </h1>
+      <div className="mb-12 grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] md:items-end">
+        <div className="max-w-3xl">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+            Blog
+          </p>
+          <h1 className="text-5xl font-semibold tracking-tight text-white md:text-7xl">
+            Baca Blog Terbaru
+          </h1>
+        </div>
+        <label className="relative block">
+          <span className="sr-only">Cari blog</span>
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Cari berdasarkan title atau excerpt..."
+            className="h-13 w-full rounded-xl border border-white/10 bg-white/10 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-cyan-300/60 focus:bg-white/[0.13]"
+          />
+        </label>
       </div>
-      <div className="grid gap-5 md:grid-cols-2">
-        {posts.map((post) => (
-          <BlogCard key={post.slug} post={post} />
-        ))}
-      </div>
+      {filteredPosts.length > 0 ? (
+        <div className="grid gap-5 md:grid-cols-2">
+          {filteredPosts.map((post) => (
+            <BlogCard key={post.slug} post={post} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-white/10 bg-white/10 p-8 text-center">
+          <p className="text-lg font-medium text-white">Blog tidak ditemukan.</p>
+          <p className="mt-2 text-zinc-400">
+            Coba gunakan kata kunci lain dari judul atau excerpt.
+          </p>
+        </div>
+      )}
     </section>
   )
 }
