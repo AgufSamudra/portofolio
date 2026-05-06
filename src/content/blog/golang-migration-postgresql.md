@@ -9,8 +9,6 @@ tags: ["Database", "Software Development"]
 
 Kalau kamu pakai Go dan PostgreSQL, `golang-migrate` adalah pilihan paling straightforward untuk handle database migration. Ini setup-nya dari awal.
 
----
-
 ## Install Dependency
 
 ```bash
@@ -26,7 +24,6 @@ Kenapa `golang-migrate`? Beberapa alasan:
 - **File-based migration** - migration disimpan sebagai file `.sql` biasa, bukan embedded di kode Go. Ini penting supaya migration bisa di-review lewat pull request seperti perubahan kode biasa.
 - **Versioning otomatis** - setiap migration punya timestamp unik, jadi urutan eksekusi selalu konsisten di semua environment.
 
----
 
 ## Konfigurasi Environment
 
@@ -52,7 +49,6 @@ Contoh penyesuaian:
 - `5432`: port PostgreSQL
 - `subscription`: nama database
 
----
 
 ## Struktur Folder
 
@@ -77,7 +73,6 @@ Struktur ini mengikuti prinsip **Clean Architecture** - setiap lapisan punya tan
 
 Dengan pemisahan ini, kode tetap mudah di-maintain dan di-test seiring project berkembang.
 
----
 
 ## File yang Terlibat
 
@@ -255,7 +250,6 @@ Helper lain yang ada di file ini:
 - `loadEnvFile`: membaca file `.env` sederhana dan memasukkan nilainya ke environment.
 - `printUsage`: menampilkan daftar command yang tersedia.
 
----
 
 ## Membuat Migration Baru
 
@@ -277,7 +271,6 @@ Gunakan:
 - `.up.sql` untuk perubahan saat migration dijalankan
 - `.down.sql` untuk rollback perubahan
 
----
 
 ## Contoh: Tabel Users
 
@@ -329,7 +322,6 @@ DROP INDEX IF EXISTS users_email_idx;
 DROP TABLE IF EXISTS users;
 ```
 
----
 
 ## Menjalankan Migration
 
