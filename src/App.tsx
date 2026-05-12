@@ -307,7 +307,7 @@ function WhatsappIcon({ className }: { className?: string }) {
 
 type MarkdownBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string }
-  | { type: "list"; items: string[] }
+  | { type: "list"; ordered: boolean; items: string[] }
   | { type: "code"; language: string; code: string }
   | { type: "table"; headers: string[]; rows: string[][] }
   | { type: "paragraph"; text: string }
@@ -350,14 +350,17 @@ function MarkdownContent({ content }: { content: string }) {
         }
 
         if (block.type === "list") {
+          const ListTag = block.ordered ? "ol" : "ul"
+          const markerClassName = block.ordered ? "list-decimal" : "list-disc"
+
           return (
-            <ul key={index} className="space-y-3 pl-5">
-              {block.items.map((item) => (
-                <li key={item} className="list-disc leading-8 marker:text-cyan-300">
+            <ListTag key={index} className="space-y-3 pl-5">
+              {block.items.map((item, itemIndex) => (
+                <li key={`${itemIndex}-${item}`} className={`${markerClassName} leading-8 marker:text-cyan-300`}>
                   {renderInline(item)}
                 </li>
               ))}
-            </ul>
+            </ListTag>
           )
         }
 
@@ -487,15 +490,27 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
       continue
     }
 
-    if (trimmed.startsWith("- ")) {
+    if (isUnorderedListItem(trimmed)) {
       const items: string[] = []
 
-      while (index < lines.length && lines[index].trim().startsWith("- ")) {
-        items.push(lines[index].trim().replace(/^- /, ""))
+      while (index < lines.length && isUnorderedListItem(lines[index].trim())) {
+        items.push(lines[index].trim().replace(/^-\s+/, ""))
         index += 1
       }
 
-      blocks.push({ type: "list", items })
+      blocks.push({ type: "list", ordered: false, items })
+      continue
+    }
+
+    if (isOrderedListItem(trimmed)) {
+      const items: string[] = []
+
+      while (index < lines.length && isOrderedListItem(lines[index].trim())) {
+        items.push(lines[index].trim().replace(/^\d+\.\s+/, ""))
+        index += 1
+      }
+
+      blocks.push({ type: "list", ordered: true, items })
       continue
     }
 
@@ -506,7 +521,8 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
       lines[index].trim() &&
       !lines[index].trim().startsWith("```") &&
       !lines[index].trim().match(/^(#{1,3})\s+/) &&
-      !lines[index].trim().startsWith("- ") &&
+      !isUnorderedListItem(lines[index].trim()) &&
+      !isOrderedListItem(lines[index].trim()) &&
       !isMarkdownTableStart(lines, index)
     ) {
       paragraphLines.push(lines[index].trim())
@@ -520,6 +536,14 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
   }
 
   return blocks
+}
+
+function isUnorderedListItem(line: string) {
+  return /^-\s+/.test(line)
+}
+
+function isOrderedListItem(line: string) {
+  return /^\d+\.\s+/.test(line)
 }
 
 function isMarkdownTableStart(lines: string[], index: number) {
