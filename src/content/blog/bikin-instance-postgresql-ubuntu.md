@@ -1,9 +1,9 @@
----
+
 title: "Cara Membuat Instance PostgreSQL Baru di Ubuntu/Debian + Setup SSL/TLS"
 date: "2026-05-12"
 excerpt: "Cara setup instace postgresql di ubuntu linux plus dengan setup SSL/TLS"
 tags: ["Database", "PostgreSQL"]
----
+
 
 ## Membuat Instance PostgreSQL Baru di Ubuntu/Debian + Setup SSL/TLS
 
@@ -19,7 +19,7 @@ Di contoh ini kita akan membuat cluster PostgreSQL baru dengan:
 
 > Catatan: istilah “instance” di PostgreSQL Debian/Ubuntu biasanya direpresentasikan sebagai **cluster**. Satu cluster punya port, data directory, config, dan service sendiri.
 
----
+
 
 ## 1. Cek PostgreSQL yang Sudah Terinstall
 
@@ -40,7 +40,7 @@ Kenapa ini penting?
 
 Karena PostgreSQL default biasanya sudah jalan di port `5432`. Kalau kamu langsung bikin instance kedua pakai port yang sama, PostgreSQL bisa gagal start karena port bentrok. Jadi untuk instance baru, kita pakai port lain, misalnya `5433`.
 
----
+
 
 ## 2. Buat Cluster PostgreSQL Baru
 
@@ -77,7 +77,7 @@ Harusnya muncul cluster baru seperti ini:
 16  main_dev  5433 online postgres /var/lib/postgresql/16/main_dev ...
 ```
 
----
+
 
 ## 3. Ubah Sementara `pg_hba.conf` agar Bisa Login Lokal Tanpa Password
 
@@ -121,7 +121,7 @@ sudo pg_ctlcluster 16 main_dev restart
 
 > Lebih aman pakai `pg_ctlcluster` untuk cluster spesifik dibanding restart semua PostgreSQL, karena kita cuma menyentuh instance `16/main_dev`.
 
----
+
 
 ## 4. Masuk ke PostgreSQL dan Set Password User `postgres`
 
@@ -167,7 +167,7 @@ Reason:
 
 User `postgres` adalah superuser default di PostgreSQL. Password ini perlu diset supaya koneksi remote/client seperti pgAdmin, aplikasi backend, atau service lain bisa login dengan aman.
 
----
+
 
 ## 5. Kembalikan `pg_hba.conf` ke Authentication yang Aman
 
@@ -200,7 +200,7 @@ Test login lagi, sekarang dengan password:
 psql -U postgres -h localhost -p 5433 -W
 ```
 
----
+
 
 ## 6. Ubah `listen_addresses` agar Bisa Diakses dari Luar Server
 
@@ -240,7 +240,7 @@ Restart cluster:
 sudo pg_ctlcluster 16 main_dev restart
 ```
 
----
+
 
 ## 7. Tambahkan Rule Remote Access di `pg_hba.conf`
 
@@ -272,7 +272,7 @@ Reload cluster:
 sudo pg_ctlcluster 16 main_dev reload
 ```
 
----
+
 
 ## 8. Buka Port di Firewall
 
@@ -292,7 +292,7 @@ Reason:
 
 Walaupun PostgreSQL sudah listen di port `5433`, koneksi tetap bisa gagal kalau firewall OS menutup port tersebut.
 
----
+
 
 # Setup SSL/TLS untuk PostgreSQL
 
@@ -306,7 +306,7 @@ pg.akademiquality.com
 
 > Pastikan domain/subdomain sudah mengarah ke IP server PostgreSQL sebelum testing `sslmode=verify-full`.
 
----
+
 
 ## 9. Buat Directory SSL
 
@@ -328,7 +328,7 @@ Sertifikat SSL sebaiknya dipisahkan per environment. Misalnya:
 
 Dengan begitu, config staging dan production tidak kecampur.
 
----
+
 
 ## 10. Buat Root CA
 
@@ -354,7 +354,7 @@ Reason:
 
 Root CA ini akan menjadi “pihak yang dipercaya” untuk menandatangani sertifikat server PostgreSQL. Client nanti perlu punya `rootCA.crt` supaya bisa memverifikasi bahwa server yang diakses benar-benar server yang valid.
 
----
+
 
 ## 11. Buat Sertifikat Server
 
@@ -380,7 +380,7 @@ Reason:
 
 Server certificate dipakai PostgreSQL untuk membuktikan identitas server ke client. Kalau pakai `sslmode=verify-full`, hostname yang dipakai client harus cocok dengan certificate.
 
----
+
 
 ## 12. Buat File Extension untuk Subject Alternative Name
 
@@ -408,7 +408,7 @@ Reason:
 
 Modern TLS verification lebih mengutamakan `Subject Alternative Name` atau SAN. Jadi domain/IP yang dipakai client harus masuk ke bagian ini, terutama kalau ingin pakai `sslmode=verify-full`.
 
----
+
 
 ## 13. Tandatangani Sertifikat Server dengan Root CA
 
@@ -430,7 +430,7 @@ Reason:
 
 Di step ini, Root CA menandatangani certificate server. Hasil akhirnya adalah `server.crt`, yang akan dipakai oleh PostgreSQL.
 
----
+
 
 ## 14. Atur Ownership dan Permission File SSL
 
@@ -458,7 +458,7 @@ Reason:
 
 `server.key` adalah private key. Kalau file ini bocor, orang lain bisa menyamar sebagai server database kamu. PostgreSQL juga biasanya akan menolak private key yang permission-nya terlalu terbuka.
 
----
+
 
 ## 15. Enable SSL di `postgresql.conf`
 
@@ -487,7 +487,7 @@ Restart cluster:
 sudo pg_ctlcluster 16 main_dev restart
 ```
 
----
+
 
 ## 16. Paksa Koneksi Remote Menggunakan SSL
 
@@ -527,7 +527,7 @@ Reload/restart cluster:
 sudo pg_ctlcluster 16 main_dev restart
 ```
 
----
+
 
 ## 17. Cek Status Cluster
 
@@ -553,7 +553,7 @@ Reason:
 
 Ini memastikan cluster `main_dev` benar-benar running di port yang benar, bukan cuma service PostgreSQL globalnya saja.
 
----
+
 
 ## 18. Testing Connection SSL dari Client
 
@@ -578,7 +578,7 @@ IP.1 = 202.10.35.45
 
 Kalau tidak, `verify-full` bisa gagal karena hostname/IP tidak match dengan certificate.
 
----
+
 
 ## 19. Testing dari pgAdmin
 
@@ -611,7 +611,7 @@ Reason:
 
 pgAdmin perlu Root CA supaya bisa memverifikasi certificate PostgreSQL server. Kalau pakai `verify-full`, host yang kamu isi di pgAdmin harus sama dengan domain di certificate/SAN.
 
----
+
 
 # Troubleshooting Umum
 
@@ -631,7 +631,7 @@ pg_lsclusters
 
 Kalau port sudah dipakai cluster lain, ganti port cluster baru.
 
----
+
 
 ## 2. Tidak Bisa Remote Connect
 
@@ -643,7 +643,7 @@ Cek beberapa hal:
 - DNS/subdomain sudah mengarah ke IP server.
 - PostgreSQL sudah direstart setelah perubahan config.
 
----
+
 
 ## 3. SSL Verify-Full Gagal
 
@@ -654,7 +654,7 @@ Biasanya karena:
 - Sertifikat sudah expired.
 - Connect pakai IP, tapi IP belum dimasukkan ke SAN.
 
----
+
 
 ## 4. PostgreSQL Gagal Start Setelah Enable SSL
 
@@ -676,7 +676,7 @@ Masalah paling umum:
 - File `server.key` permission terlalu terbuka.
 - File SSL belum dimiliki user `postgres`.
 
----
+
 
 # Best Practice Singkat
 
@@ -690,7 +690,7 @@ Untuk environment production, sebaiknya:
 - Gunakan port berbeda untuk tiap cluster PostgreSQL.
 - Dokumentasikan nama cluster, port, path config, dan domain yang dipakai.
 
----
+
 
 # Ringkasan Command Penting
 
@@ -718,7 +718,7 @@ sudo pg_ctlcluster 16 main_dev status
 sudo systemctl status postgresql@16-main_dev
 ```
 
----
+
 
 # Referensi
 
