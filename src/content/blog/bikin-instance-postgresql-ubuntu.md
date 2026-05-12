@@ -1,9 +1,9 @@
-
+---
 title: "Cara Membuat Instance PostgreSQL Baru di Ubuntu/Debian + Setup SSL/TLS"
 date: "2026-05-12"
 excerpt: "Cara setup instace postgresql di ubuntu linux plus dengan setup SSL/TLS"
 tags: ["Database", "PostgreSQL"]
-
+---
 
 ## Membuat Instance PostgreSQL Baru di Ubuntu/Debian + Setup SSL/TLS
 
