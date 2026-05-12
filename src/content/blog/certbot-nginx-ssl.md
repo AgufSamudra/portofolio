@@ -116,8 +116,6 @@ Masuk ke folder config Nginx:
 cd /etc/nginx/sites-available
 ```
 
-> Catatan: folder yang benar biasanya `sites-available`, bukan `site-available`.
-
 Buat file config baru. Misalnya nama domain kita `api.example.com`, maka file-nya bisa dibuat seperti ini:
 
 ```bash
