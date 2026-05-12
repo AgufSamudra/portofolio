@@ -14,7 +14,6 @@ import {
   Menu,
   MapPin,
   Search,
-  Sparkles,
   X,
 } from "lucide-react"
 
@@ -801,9 +800,6 @@ function HomePage({ latestPosts }: { latestPosts: BlogPost[] }) {
             </div>
             <div className="absolute -bottom-6 left-4 right-4 rounded-xl border border-white/15 bg-white p-4 text-zinc-950 shadow-xl shadow-black/40 sm:left-6 sm:right-6">
               <div className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-cyan-100 text-cyan-800">
-                  <Sparkles className="size-5" />
-                </span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">Available for projects</p>
                   <p className="text-sm leading-5 text-zinc-500">
